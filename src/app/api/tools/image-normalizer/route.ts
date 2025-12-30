@@ -52,16 +52,52 @@ export async function POST(request: NextRequest) {
     // Execute Python script
     try {
       const command = `python3 "${pythonScriptPath}" "${inputPath}" "${outputPath}" ${width} ${height}`;
-      await execAsync(command, { timeout: 55000 }); // 55 second timeout
+      const { stdout, stderr } = await execAsync(command, { 
+        timeout: 55000, // 55 second timeout
+        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+      });
+      
+      // Log any stderr output for debugging
+      if (stderr && !stderr.includes("Successfully")) {
+        console.warn("Python script stderr:", stderr);
+      }
     } catch (error: any) {
       // Clean up input file
       try {
         await unlink(inputPath);
       } catch {}
+      
+      // Clean up output file if it exists but is incomplete
+      try {
+        await unlink(outputPath);
+      } catch {}
 
+      const errorMessage = error.stderr 
+        ? `Python script error: ${error.stderr.split('\n').slice(-3).join(' ')}`
+        : error.message || "Unknown error";
+      
+      console.error("Python script execution failed:", errorMessage);
+      
       return NextResponse.json(
         {
-          error: `Processing failed: ${error.message || "Unknown error"}`,
+          error: `Processing failed: ${errorMessage}`,
+        },
+        { status: 500 }
+      );
+    }
+    
+    // Check if output file exists
+    try {
+      await readFile(outputPath);
+    } catch (err) {
+      // Clean up input file
+      try {
+        await unlink(inputPath);
+      } catch {}
+      
+      return NextResponse.json(
+        {
+          error: "Processing completed but output file was not created. Please check server logs.",
         },
         { status: 500 }
       );

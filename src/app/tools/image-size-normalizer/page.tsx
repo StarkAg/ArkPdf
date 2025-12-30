@@ -45,42 +45,84 @@ export default function ImageSizeNormalizerPage() {
     try {
       const xhr = new XMLHttpRequest();
 
+      // Track upload progress
       xhr.upload.addEventListener("progress", (e) => {
         if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 50; // Upload is 50% of progress
-          setProgress(percentComplete);
+          const uploadPercent = (e.loaded / e.total) * 40; // Upload is 40% of total
+          setProgress(uploadPercent);
         }
       });
 
-      xhr.addEventListener("load", () => {
+      // Handle response
+      xhr.addEventListener("load", async () => {
         if (xhr.status === 200) {
-          setProgress(75);
+          setProgress(50);
           setState("processing");
-          // Simulate processing progress
-          setTimeout(() => setProgress(90), 500);
-          setTimeout(() => {
-            const blob = xhr.response;
-            const url = URL.createObjectURL(blob);
-            setDownloadUrl(url);
-            setProgress(100);
-            setState("success");
-          }, 1000);
+          
+          // Check if response is actually a PDF
+          const blob = xhr.response;
+          const contentType = xhr.getResponseHeader("content-type");
+          
+          if (contentType && contentType.includes("application/pdf")) {
+            // Simulate processing steps
+            setTimeout(() => setProgress(70), 300);
+            setTimeout(() => setProgress(85), 600);
+            setTimeout(() => {
+              const url = URL.createObjectURL(blob);
+              setDownloadUrl(url);
+              setProgress(100);
+              setState("success");
+            }, 900);
+          } else {
+            // Response might be an error JSON, try to read it
+            try {
+              const text = await blob.text();
+              const errorData = JSON.parse(text);
+              setError(errorData.error || "Processing failed");
+            } catch {
+              setError("Received invalid response from server");
+            }
+            setState("error");
+            setProgress(0);
+          }
         } else {
-          const errorText = xhr.responseText || "Processing failed";
-          setError(errorText);
+          // Handle error response
+          setProgress(0);
           setState("error");
+          
+          try {
+            const blob = xhr.response;
+            const text = await blob.text();
+            try {
+              const errorData = JSON.parse(text);
+              setError(errorData.error || `Server error: ${xhr.status}`);
+            } catch {
+              setError(text || `Server error: ${xhr.status}`);
+            }
+          } catch {
+            setError(`Processing failed with status ${xhr.status}`);
+          }
         }
       });
 
       xhr.addEventListener("error", () => {
-        setError("Network error. Please try again.");
+        setProgress(0);
+        setError("Network error. Please check your connection and try again.");
+        setState("error");
+      });
+
+      xhr.addEventListener("timeout", () => {
+        setProgress(0);
+        setError("Request timed out. The file might be too large or the server is busy.");
         setState("error");
       });
 
       xhr.open("POST", "/api/tools/image-normalizer");
       xhr.responseType = "blob";
+      xhr.timeout = 60000; // 60 second timeout
       xhr.send(formData);
     } catch (err) {
+      setProgress(0);
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
       setState("error");
     }
