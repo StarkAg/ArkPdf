@@ -112,24 +112,24 @@ export default function ImageSizeNormalizerPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">
             Image Size Normalizer
           </h1>
-          <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100">
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-black">
             Core
           </span>
         </div>
-        <p className="text-sm text-slate-300/80">
+        <p className="text-sm text-zinc-400">
           Normalize all embedded images in your PDF to a consistent canvas size
           while preserving aspect ratios. Images are padded with white backgrounds
           to match the target dimensions.
         </p>
       </div>
 
-      <div className="space-y-6 rounded-xl border border-white/10 bg-slate-950/60 p-5 shadow-inner shadow-black/40 sm:p-6">
+      <div className="space-y-6 rounded-xl border border-zinc-800 bg-black/70 p-5 shadow-inner shadow-black/70 sm:p-6">
         {/* File Upload */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-slate-200">
+          <label className="block text-sm font-medium text-zinc-200">
             PDF File
           </label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -138,16 +138,16 @@ export default function ImageSizeNormalizerPage() {
               type="file"
               accept=".pdf,application/pdf"
               onChange={handleFileSelect}
-              className="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-100 file:hover:bg-emerald-500/30 file:cursor-pointer file:transition-colors"
+              className="block w-full text-sm text-zinc-300 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-black file:hover:bg-zinc-200 file:cursor-pointer file:transition-colors"
               disabled={state === "uploading" || state === "processing"}
             />
             {file && (
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-200">
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-black">
                   ✓
                 </span>
                 <span className="font-mono">{file.name}</span>
-                <span className="text-slate-500">
+                <span className="text-zinc-600">
                   ({(file.size / 1024 / 1024).toFixed(2)} MB)
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function ImageSizeNormalizerPage() {
         {/* Size Configuration */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-zinc-200">
               Target Width (px)
             </label>
             <input
@@ -167,12 +167,12 @@ export default function ImageSizeNormalizerPage() {
               max="5000"
               value={width}
               onChange={(e) => setWidth(parseInt(e.target.value) || 1200)}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              className="w-full rounded-lg border border-zinc-800 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
               disabled={state === "uploading" || state === "processing"}
             />
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-200">
+            <label className="block text-sm font-medium text-zinc-200">
               Target Height (px)
             </label>
             <input
@@ -181,7 +181,7 @@ export default function ImageSizeNormalizerPage() {
               max="5000"
               value={height}
               onChange={(e) => setHeight(parseInt(e.target.value) || 1200)}
-              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              className="w-full rounded-lg border border-zinc-800 bg-black/60 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-500/40"
               disabled={state === "uploading" || state === "processing"}
             />
           </div>
@@ -190,15 +190,15 @@ export default function ImageSizeNormalizerPage() {
         {/* Progress Bar */}
         {(state === "uploading" || state === "processing") && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center justify-between text-xs text-zinc-500">
               <span>
                 {state === "uploading" ? "Uploading..." : "Processing images..."}
               </span>
               <span className="font-mono">{Math.round(progress)}%</span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900/60">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-900/80">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-zinc-50 to-zinc-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -217,9 +217,9 @@ export default function ImageSizeNormalizerPage() {
 
         {/* Success Message */}
         {state === "success" && downloadUrl && (
-          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+          <div className="rounded-lg border border-zinc-300 bg-zinc-100/10 p-3 text-sm text-zinc-100">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-400">✓</span>
+              <span className="text-zinc-50">✓</span>
               <span>PDF processed successfully! Ready for download.</span>
             </div>
           </div>
@@ -230,11 +230,11 @@ export default function ImageSizeNormalizerPage() {
           <button
             onClick={handleProcess}
             disabled={!file || state === "uploading" || state === "processing"}
-            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-100 shadow-sm shadow-emerald-500/40 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500/20"
+            className="inline-flex items-center gap-2 rounded-lg bg-zinc-50 px-4 py-2 text-sm font-semibold text-black shadow-sm shadow-black/40 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zinc-50"
           >
             {state === "uploading" || state === "processing" ? (
               <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-200 border-t-transparent" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-900 border-t-transparent" />
                 Processing...
               </>
             ) : (
@@ -248,7 +248,7 @@ export default function ImageSizeNormalizerPage() {
           {state === "success" && downloadUrl && (
             <button
               onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/60 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/10"
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-black px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-900"
             >
               <span>↓</span>
               Download Normalized PDF
@@ -258,7 +258,7 @@ export default function ImageSizeNormalizerPage() {
           {(state === "success" || state === "error") && (
             <button
               onClick={handleReset}
-              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800/80 hover:text-slate-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-black px-4 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-900 hover:text-zinc-50"
             >
               Reset
             </button>
@@ -267,8 +267,8 @@ export default function ImageSizeNormalizerPage() {
       </div>
 
       {/* Info Section */}
-      <div className="rounded-xl border border-white/10 bg-slate-950/60 p-5 text-xs text-slate-400 sm:p-6">
-        <h3 className="mb-3 text-sm font-semibold text-slate-200">
+      <div className="rounded-xl border border-zinc-800 bg-black/80 p-5 text-xs text-zinc-500 sm:p-6">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-200">
           How it works
         </h3>
         <ul className="space-y-2 list-disc list-inside">

@@ -36,12 +36,12 @@ export default function ToolsLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
-      <aside className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-inner shadow-black/40">
+      <aside className="space-y-4 rounded-2xl border border-zinc-800 bg-black/60 p-4 shadow-inner shadow-black/70">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
             Tools
           </p>
-          <p className="mt-1 text-sm text-slate-300/80">
+          <p className="mt-1 text-sm text-zinc-400">
             Modular actions you can combine into custom document pipelines.
           </p>
         </div>
@@ -54,14 +54,14 @@ export default function ToolsLayout({ children }: { children: ReactNode }) {
                 href={tool.href}
                 className={`flex items-center justify-between rounded-lg px-3 py-2 transition ${
                   isActive
-                    ? "bg-emerald-500/20 text-emerald-100 ring-1 ring-emerald-400/60"
-                    : "text-slate-300 hover:bg-slate-800/80 hover:text-slate-50"
+                    ? "bg-zinc-100 text-black ring-1 ring-zinc-300"
+                    : "text-zinc-300 hover:bg-zinc-900 hover:text-zinc-50"
                 }`}
               >
                 <span>{tool.label}</span>
                 <span
                   className={`text-[10px] font-semibold uppercase ${
-                    isActive ? "text-emerald-300" : tool.badgeColor
+                    isActive ? "text-black" : tool.badgeColor
                   }`}
                 >
                   {tool.badge}
@@ -71,7 +71,7 @@ export default function ToolsLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
       </aside>
-      <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl shadow-black/40 sm:p-6 lg:p-7">
+      <section className="rounded-2xl border border-zinc-800 bg-black/70 p-5 shadow-xl shadow-black/70 sm:p-6 lg:p-7">
         {children}
       </section>
     </div>
