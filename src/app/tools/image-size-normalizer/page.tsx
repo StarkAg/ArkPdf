@@ -1,0 +1,294 @@
+"use client";
+
+import { useState, useRef } from "react";
+
+type ProcessingState = "idle" | "uploading" | "processing" | "success" | "error";
+
+export default function ImageSizeNormalizerPage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [width, setWidth] = useState<number>(1200);
+  const [height, setHeight] = useState<number>(1200);
+  const [state, setState] = useState<ProcessingState>("idle");
+  const [progress, setProgress] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && selectedFile.type === "application/pdf") {
+      setFile(selectedFile);
+      setError(null);
+      setState("idle");
+      setDownloadUrl(null);
+    } else {
+      setError("Please select a valid PDF file.");
+    }
+  };
+
+  const handleProcess = async () => {
+    if (!file) {
+      setError("Please select a PDF file first.");
+      return;
+    }
+
+    setState("uploading");
+    setProgress(0);
+    setError(null);
+    setDownloadUrl(null);
+
+    const formData = new FormData();
+    formData.append("pdf", file);
+    formData.append("width", width.toString());
+    formData.append("height", height.toString());
+
+    try {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = (e.loaded / e.total) * 50; // Upload is 50% of progress
+          setProgress(percentComplete);
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        if (xhr.status === 200) {
+          setProgress(75);
+          setState("processing");
+          // Simulate processing progress
+          setTimeout(() => setProgress(90), 500);
+          setTimeout(() => {
+            const blob = xhr.response;
+            const url = URL.createObjectURL(blob);
+            setDownloadUrl(url);
+            setProgress(100);
+            setState("success");
+          }, 1000);
+        } else {
+          const errorText = xhr.responseText || "Processing failed";
+          setError(errorText);
+          setState("error");
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        setError("Network error. Please try again.");
+        setState("error");
+      });
+
+      xhr.open("POST", "/api/tools/image-normalizer");
+      xhr.responseType = "blob";
+      xhr.send(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setState("error");
+    }
+  };
+
+  const handleDownload = () => {
+    if (downloadUrl) {
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = file?.name.replace(".pdf", "_normalized.pdf") || "normalized.pdf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
+  const handleReset = () => {
+    setFile(null);
+    setState("idle");
+    setProgress(0);
+    setError(null);
+    setDownloadUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">
+            Image Size Normalizer
+          </h1>
+          <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-100">
+            Core
+          </span>
+        </div>
+        <p className="text-sm text-slate-300/80">
+          Normalize all embedded images in your PDF to a consistent canvas size
+          while preserving aspect ratios. Images are padded with white backgrounds
+          to match the target dimensions.
+        </p>
+      </div>
+
+      <div className="space-y-6 rounded-xl border border-white/10 bg-slate-950/60 p-5 shadow-inner shadow-black/40 sm:p-6">
+        {/* File Upload */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-slate-200">
+            PDF File
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handleFileSelect}
+              className="block w-full text-sm text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-500/20 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-100 file:hover:bg-emerald-500/30 file:cursor-pointer file:transition-colors"
+              disabled={state === "uploading" || state === "processing"}
+            />
+            {file && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-200">
+                  ✓
+                </span>
+                <span className="font-mono">{file.name}</span>
+                <span className="text-slate-500">
+                  ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Size Configuration */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-200">
+              Target Width (px)
+            </label>
+            <input
+              type="number"
+              min="100"
+              max="5000"
+              value={width}
+              onChange={(e) => setWidth(parseInt(e.target.value) || 1200)}
+              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              disabled={state === "uploading" || state === "processing"}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-slate-200">
+              Target Height (px)
+            </label>
+            <input
+              type="number"
+              min="100"
+              max="5000"
+              value={height}
+              onChange={(e) => setHeight(parseInt(e.target.value) || 1200)}
+              className="w-full rounded-lg border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
+              disabled={state === "uploading" || state === "processing"}
+            />
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        {(state === "uploading" || state === "processing") && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>
+                {state === "uploading" ? "Uploading..." : "Processing images..."}
+              </span>
+              <span className="font-mono">{Math.round(progress)}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900/60">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+            <div className="flex items-center gap-2">
+              <span className="text-red-400">⚠</span>
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {state === "success" && downloadUrl && (
+          <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400">✓</span>
+              <span>PDF processed successfully! Ready for download.</span>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleProcess}
+            disabled={!file || state === "uploading" || state === "processing"}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-100 shadow-sm shadow-emerald-500/40 transition hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-emerald-500/20"
+          >
+            {state === "uploading" || state === "processing" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-200 border-t-transparent" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <span>⚡</span>
+                Process PDF
+              </>
+            )}
+          </button>
+
+          {state === "success" && downloadUrl && (
+            <button
+              onClick={handleDownload}
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/60 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/10"
+            >
+              <span>↓</span>
+              Download Normalized PDF
+            </button>
+          )}
+
+          {(state === "success" || state === "error") && (
+            <button
+              onClick={handleReset}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-800/80 hover:text-slate-50"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Info Section */}
+      <div className="rounded-xl border border-white/10 bg-slate-950/60 p-5 text-xs text-slate-400 sm:p-6">
+        <h3 className="mb-3 text-sm font-semibold text-slate-200">
+          How it works
+        </h3>
+        <ul className="space-y-2 list-disc list-inside">
+          <li>
+            Extracts all embedded images from your PDF document
+          </li>
+          <li>
+            Resizes each image to fit within the target dimensions while
+            preserving aspect ratio
+          </li>
+          <li>
+            Pads images with white backgrounds to match the exact target size
+          </li>
+          <li>
+            Rebuilds the PDF with normalized images using high-quality LANCZOS
+            resampling
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
