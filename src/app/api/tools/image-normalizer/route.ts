@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, readFile, unlink, mkdir } from "fs/promises";
+import { writeFile, readFile, unlink, mkdir, access } from "fs/promises";
+import { existsSync } from "fs";
 import { join } from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -31,27 +32,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create temp directory if it doesn't exist
-    const tempDir = join(process.cwd(), "temp");
+    // Use /tmp for serverless environments (Vercel, AWS Lambda, etc.)
+    // Fallback to process.cwd()/temp for local development
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    let tempDir = isServerless ? "/tmp" : join(process.cwd(), "temp");
+    
     try {
       await mkdir(tempDir, { recursive: true });
-    } catch (err) {
-      // Directory might already exist, ignore
+    } catch (err: any) {
+      // If directory creation fails and we're not in serverless, try /tmp as fallback
+      if (!isServerless && err.code !== "EEXIST") {
+        tempDir = "/tmp";
+        try {
+          await mkdir(tempDir, { recursive: true });
+        } catch (fallbackErr) {
+          return NextResponse.json(
+            { error: "Failed to create temporary directory" },
+            { status: 500 }
+          );
+        }
+      } else if (isServerless && err.code !== "EEXIST") {
+        return NextResponse.json(
+          { error: "Failed to access temporary directory in serverless environment" },
+          { status: 500 }
+        );
+      }
     }
 
     // Save uploaded file to temp directory
     const timestamp = Date.now();
-    const inputPath = join(tempDir, `input_${timestamp}.pdf`);
-    const outputPath = join(tempDir, `output_${timestamp}.pdf`);
-    const pythonScriptPath = join(process.cwd(), "scripts", "normalize_images.py");
+    const randomId = Math.random().toString(36).substring(7);
+    const inputPath = join(tempDir, `input_${timestamp}_${randomId}.pdf`);
+    const outputPath = join(tempDir, `output_${timestamp}_${randomId}.pdf`);
+    
+    // Python script path - in serverless, scripts need to be in the deployment
+    const pythonScriptPath = isServerless 
+      ? join(process.cwd(), "scripts", "normalize_images.py")
+      : join(process.cwd(), "scripts", "normalize_images.py");
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(inputPath, buffer);
-
-    // Execute Python script
+    
+    // Write input file
     try {
-      const command = `python3 "${pythonScriptPath}" "${inputPath}" "${outputPath}" ${width} ${height}`;
+      await writeFile(inputPath, buffer);
+    } catch (writeErr: any) {
+      return NextResponse.json(
+        { 
+          error: `Failed to write temporary file: ${writeErr.message}. Temp directory: ${tempDir}` 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Execute Python script - use venv Python if available, otherwise system python3
+    const venvPython = join(process.cwd(), "venv", "bin", "python3");
+    const pythonCmd = existsSync(venvPython) ? venvPython : "python3";
+    
+    try {
+      const command = `"${pythonCmd}" "${pythonScriptPath}" "${inputPath}" "${outputPath}" ${width} ${height}`;
       const { stdout, stderr } = await execAsync(command, { 
         timeout: 55000, // 55 second timeout
         maxBuffer: 10 * 1024 * 1024 // 10MB buffer

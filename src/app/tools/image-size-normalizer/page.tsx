@@ -152,22 +152,6 @@ export default function ImageSizeNormalizerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-50 sm:text-2xl">
-            Image Size Normalizer
-          </h1>
-          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-black">
-            Core
-          </span>
-        </div>
-        <p className="text-sm text-zinc-400">
-          Normalize all embedded images in your PDF to a consistent canvas size
-          while preserving aspect ratios. Images are padded with white backgrounds
-          to match the target dimensions.
-        </p>
-      </div>
-
       <div className="space-y-6 rounded-xl border border-zinc-800 bg-black/70 p-5 shadow-inner shadow-black/70 sm:p-6">
         {/* File Upload */}
         <div className="space-y-3">
@@ -306,29 +290,6 @@ export default function ImageSizeNormalizerPage() {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Info Section */}
-      <div className="rounded-xl border border-zinc-800 bg-black/80 p-5 text-xs text-zinc-500 sm:p-6">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-200">
-          How it works
-        </h3>
-        <ul className="space-y-2 list-disc list-inside">
-          <li>
-            Extracts all embedded images from your PDF document
-          </li>
-          <li>
-            Resizes each image to fit within the target dimensions while
-            preserving aspect ratio
-          </li>
-          <li>
-            Pads images with white backgrounds to match the exact target size
-          </li>
-          <li>
-            Rebuilds the PDF with normalized images using high-quality LANCZOS
-            resampling
-          </li>
-        </ul>
       </div>
     </div>
   );
